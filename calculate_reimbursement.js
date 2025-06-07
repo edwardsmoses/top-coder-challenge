@@ -21,12 +21,20 @@ function calculateReimbursement(tripDays, miles, receipts) {
     // Base calculation
     let reimbursement = days * perDayRate + milesTraveled * 0.58;
     
-    // Receipt processing with different logic for long vs short trips
+    // Receipt processing - this is where the "bug" lives
     let receiptContribution = 0;
     const spendingPerDay = receiptAmount / days;
     
-    // For long trips (8+ days), spending per day affects receipt treatment
-    if (days >= 8) {
+    // Check for the "small receipt penalty" bug
+    // If receipts are very small relative to the trip, apply negative factor
+    if (receiptAmount < 100 && spendingPerDay < 25) {
+        // Very small receipts get penalized
+        receiptContribution = receiptAmount * -1.5;
+    } else if (receiptAmount < 50 && days >= 8) {
+        // Small receipts on long trips get heavily penalized
+        receiptContribution = receiptAmount * -0.8;
+    } else if (days >= 8) {
+        // Long trip logic (as before)
         if (spendingPerDay < 100) {
             receiptContribution = receiptAmount * 0.46;
         } else if (spendingPerDay < 150) {
@@ -38,12 +46,14 @@ function calculateReimbursement(tripDays, miles, receipts) {
         } else if (spendingPerDay < 300) {
             receiptContribution = receiptAmount * 0.22;
         } else {
-            // Even very high spending gets some positive contribution
             receiptContribution = receiptAmount * 0.18;
         }
     } else {
-        // Shorter trips use the original generous logic
-        if (receiptAmount < 100) {
+        // Short trip logic - but check for small receipt penalty first
+        if (receiptAmount < 20 && days <= 3) {
+            // Small receipts on short trips get negative treatment
+            receiptContribution = receiptAmount * -0.5;
+        } else if (receiptAmount < 100) {
             receiptContribution = receiptAmount * 0.2;
         } else if (receiptAmount < 500) {
             receiptContribution = receiptAmount * 0.4;
