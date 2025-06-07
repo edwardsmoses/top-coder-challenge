@@ -5,61 +5,60 @@ function calculateReimbursement(tripDays, miles, receipts) {
     const milesTraveled = parseFloat(miles);
     const receiptAmount = parseFloat(receipts);
     
-    // Base per diem and mileage
-    let reimbursement = days * 100 + milesTraveled * 0.58;
+    // Different per-day rates based on trip length
+    let perDayRate = 100; // Default rate
     
-    // Receipt contribution with complex logic
+    if (days >= 14) {
+        perDayRate = 60; // Very long trips get heavily reduced rate
+    } else if (days >= 12) {
+        perDayRate = 70; // Long trips get reduced rate
+    } else if (days >= 10) {
+        perDayRate = 80; // Medium-long trips get slightly reduced rate
+    } else if (days >= 8) {
+        perDayRate = 90; // Slightly reduced for 8-9 day trips
+    }
+    
+    // Base calculation
+    let reimbursement = days * perDayRate + milesTraveled * 0.58;
+    
+    // Receipt handling with diminishing returns
     let receiptContribution = 0;
-    
-    // Spending per day affects receipt treatment
     const spendingPerDay = receiptAmount / days;
     
-    if (receiptAmount <= 50) {
-        // Very small receipts get poor treatment
-        receiptContribution = receiptAmount * 0.1;
-    } else if (spendingPerDay <= 100) {
-        // Reasonable daily spending gets good treatment
-        receiptContribution = receiptAmount * 0.7;
-    } else if (spendingPerDay <= 200) {
-        // Higher daily spending gets reduced treatment
-        receiptContribution = receiptAmount * 0.4;
+    if (receiptAmount <= 100) {
+        receiptContribution = receiptAmount * 0.5;
+    } else if (spendingPerDay <= 80) {
+        // Reasonable spending gets good treatment
+        receiptContribution = receiptAmount * 0.6;
+    } else if (spendingPerDay <= 150) {
+        // Higher spending gets reduced treatment
+        receiptContribution = receiptAmount * 0.3;
     } else {
-        // Very high daily spending gets heavily penalized
+        // Very high spending gets minimal treatment
         receiptContribution = receiptAmount * 0.1;
     }
     
-    // Long trip penalty for high spending (vacation penalty)
-    if (days >= 10 && spendingPerDay > 150) {
-        receiptContribution *= 0.3; // Heavy penalty
-    } else if (days >= 7 && spendingPerDay > 120) {
-        receiptContribution *= 0.6; // Moderate penalty
+    // Additional penalty for very long trips with high spending
+    if (days >= 12 && spendingPerDay > 100) {
+        receiptContribution *= 0.5; // Heavy penalty
     }
     
     reimbursement += receiptContribution;
     
-    // Trip length bonuses/penalties
-    if (days === 5) {
-        reimbursement += 25; // Sweet spot bonus
-    } else if (days >= 12) {
-        reimbursement -= 50; // Long trip penalty
-    } else if (days >= 8) {
-        reimbursement -= 20; // Medium trip penalty
-    }
-    
-    // Efficiency considerations
+    // Small efficiency bonus
     const milesPerDay = milesTraveled / days;
-    if (milesPerDay >= 100 && milesPerDay <= 200) {
-        reimbursement += 15; // Good efficiency bonus
+    if (milesPerDay >= 50 && milesPerDay <= 150) {
+        reimbursement += days * 5; // Small efficiency bonus
     }
     
-    // Small pseudo-random adjustment for variation
-    const hash = (days * 7 + Math.floor(milesTraveled) * 11 + Math.floor(receiptAmount * 100) * 13) % 50;
-    reimbursement += (hash - 25) * 0.8;
-    
-    // Ensure reasonable minimum
-    if (reimbursement < days * 50) {
-        reimbursement = days * 50;
+    // Sweet spot bonus for 5-day trips
+    if (days === 5) {
+        reimbursement += 30;
     }
+    
+    // Small variance
+    const hash = (days * 5 + Math.floor(milesTraveled) * 7 + Math.floor(receiptAmount * 100) * 3) % 30;
+    reimbursement += (hash - 15) * 1.2;
     
     return Math.round(reimbursement * 100) / 100;
 }
