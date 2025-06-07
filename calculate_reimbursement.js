@@ -21,26 +21,28 @@ function calculateReimbursement(tripDays, miles, receipts) {
     // Base calculation
     let reimbursement = days * perDayRate + milesTraveled * 0.58;
     
-    // Receipt processing with heavy penalties for long trips with high spending
+    // Receipt processing with different logic for long vs short trips
     let receiptContribution = 0;
     const spendingPerDay = receiptAmount / days;
     
-    // For long trips (8+ days), spending per day dramatically affects receipt treatment
+    // For long trips (8+ days), spending per day affects receipt treatment
     if (days >= 8) {
         if (spendingPerDay < 100) {
             receiptContribution = receiptAmount * 0.46;
         } else if (spendingPerDay < 150) {
-            receiptContribution = receiptAmount * 0.29;
+            receiptContribution = receiptAmount * 0.35;
         } else if (spendingPerDay < 200) {
-            receiptContribution = receiptAmount * 0.23;
+            receiptContribution = receiptAmount * 0.29;
         } else if (spendingPerDay < 250) {
-            receiptContribution = receiptAmount * 0.15;
+            receiptContribution = receiptAmount * 0.25;
+        } else if (spendingPerDay < 300) {
+            receiptContribution = receiptAmount * 0.22;
         } else {
-            // Very high spending on long trips can be negative
-            receiptContribution = receiptAmount * -0.1;
+            // Even very high spending gets some positive contribution
+            receiptContribution = receiptAmount * 0.18;
         }
     } else {
-        // Shorter trips use the original logic
+        // Shorter trips use the original generous logic
         if (receiptAmount < 100) {
             receiptContribution = receiptAmount * 0.2;
         } else if (receiptAmount < 500) {
