@@ -21,37 +21,39 @@ function calculateReimbursement(tripDays, miles, receipts) {
     // Base calculation
     let reimbursement = days * perDayRate + milesTraveled * 0.58;
     
-    // Receipt processing - high receipts get significant positive contribution
+    // Receipt processing with heavy penalties for long trips with high spending
     let receiptContribution = 0;
-    
-    if (receiptAmount < 100) {
-        // Small receipts get poor treatment
-        receiptContribution = receiptAmount * 0.2;
-    } else if (receiptAmount < 500) {
-        // Medium receipts get moderate treatment
-        receiptContribution = receiptAmount * 0.4;
-    } else if (receiptAmount < 1000) {
-        // High receipts get good treatment
-        receiptContribution = receiptAmount * 0.5;
-    } else if (receiptAmount < 1500) {
-        // Very high receipts get excellent treatment
-        receiptContribution = receiptAmount * 0.43;
-    } else if (receiptAmount < 2000) {
-        // Extremely high receipts get good treatment
-        receiptContribution = receiptAmount * 0.32;
-    } else {
-        // Maximum receipts get moderate treatment
-        receiptContribution = receiptAmount * 0.23;
-    }
-    
-    // Adjust receipt contribution based on trip length and spending patterns
     const spendingPerDay = receiptAmount / days;
     
-    // Long trip penalty for very high spending
-    if (days >= 12 && spendingPerDay > 150) {
-        receiptContribution *= 0.6; // Reduce contribution for suspected vacation
-    } else if (days >= 8 && spendingPerDay > 200) {
-        receiptContribution *= 0.8; // Moderate reduction
+    // For long trips (8+ days), spending per day dramatically affects receipt treatment
+    if (days >= 8) {
+        if (spendingPerDay < 100) {
+            receiptContribution = receiptAmount * 0.46;
+        } else if (spendingPerDay < 150) {
+            receiptContribution = receiptAmount * 0.29;
+        } else if (spendingPerDay < 200) {
+            receiptContribution = receiptAmount * 0.23;
+        } else if (spendingPerDay < 250) {
+            receiptContribution = receiptAmount * 0.15;
+        } else {
+            // Very high spending on long trips can be negative
+            receiptContribution = receiptAmount * -0.1;
+        }
+    } else {
+        // Shorter trips use the original logic
+        if (receiptAmount < 100) {
+            receiptContribution = receiptAmount * 0.2;
+        } else if (receiptAmount < 500) {
+            receiptContribution = receiptAmount * 0.4;
+        } else if (receiptAmount < 1000) {
+            receiptContribution = receiptAmount * 0.5;
+        } else if (receiptAmount < 1500) {
+            receiptContribution = receiptAmount * 0.43;
+        } else if (receiptAmount < 2000) {
+            receiptContribution = receiptAmount * 0.32;
+        } else {
+            receiptContribution = receiptAmount * 0.23;
+        }
     }
     
     reimbursement += receiptContribution;
